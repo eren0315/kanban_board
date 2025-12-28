@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'presentation/router/router.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,8 +18,6 @@ Future<void> main() async {
     );
   } catch (e) {
     debugPrint('Initialization Error: $e');
-    // Continue running app even if initialization fails, 
-    // so we can show a friendly error screen instead of a black screen.
   }
 
   runApp(
@@ -29,37 +27,21 @@ Future<void> main() async {
   );
 }
 
-class KanbanApp extends StatelessWidget {
+class KanbanApp extends ConsumerWidget {
   const KanbanApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(routerProvider);
+
     return CupertinoApp.router(
       title: 'iOS Kanban Board',
       theme: const CupertinoThemeData(
         brightness: Brightness.light,
         primaryColor: CupertinoColors.systemBlue,
       ),
-      routerConfig: _router,
+      routerConfig: router,
       debugShowCheckedModeBanner: false,
     );
   }
 }
-
-// Basic GoRouter Setup
-final GoRouter _router = GoRouter(
-  initialLocation: '/',
-  routes: [
-    GoRoute(
-      path: '/',
-      builder: (context, state) => const CupertinoPageScaffold(
-        navigationBar: CupertinoNavigationBar(
-          middle: Text('Kanban Board'),
-        ),
-        child: Center(
-          child: Text('Hexagonal Architecture Setup Complete'),
-        ),
-      ),
-    ),
-  ],
-);
