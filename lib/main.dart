@@ -7,14 +7,20 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load Environment Variables
-  await dotenv.load(fileName: ".env");
+  try {
+    // Load Environment Variables
+    await dotenv.load(fileName: ".env");
 
-  // Initialize Supabase
-  await Supabase.initialize(
-    url: dotenv.env['SUPABASE_URL'] ?? '',
-    anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
-  );
+    // Initialize Supabase
+    await Supabase.initialize(
+      url: dotenv.env['SUPABASE_URL'] ?? '',
+      anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
+    );
+  } catch (e) {
+    debugPrint('Initialization Error: $e');
+    // Continue running app even if initialization fails, 
+    // so we can show a friendly error screen instead of a black screen.
+  }
 
   runApp(
     const ProviderScope(
