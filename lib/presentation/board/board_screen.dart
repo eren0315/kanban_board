@@ -1,25 +1,57 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart'; // For Material Colors if needed, or stick to Cupertino
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/theme_provider.dart';
 import '../components/responsive_layout.dart';
 
-class BoardScreen extends StatelessWidget {
+class BoardScreen extends ConsumerWidget {
   const BoardScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = ref.watch(appColorProvider);
+
     return CupertinoPageScaffold(
+      backgroundColor: colors.background,
       navigationBar: CupertinoNavigationBar(
+        backgroundColor: colors.surface.withOpacity(0.8), // Glass effect
         middle: Text(
           'My Kanban Board',
-          style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.w600,
+            color: colors.text,
+          ),
         ),
-        trailing: const Icon(CupertinoIcons.add),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Theme Toggle Button
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: Icon(
+                colors.themeToggleIcon,
+                color: colors.icon,
+                size: 24,
+              ),
+              onPressed: () {
+                ref.read(themeProvider.notifier).toggleTheme();
+              },
+            ),
+            const SizedBox(width: 8),
+            // Add Button
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: Icon(CupertinoIcons.add, size: 28, color: colors.icon),
+              onPressed: () {},
+            ),
+          ],
+        ),
       ),
       child: ResponsiveLayout(
-        mobileBody: const _MobileBoardView(),
-        tabletBody: const _TabletBoardView(),
-        desktopBody: const _DesktopBoardView(),
+        mobileBody: _MobileBoardView(colors: colors),
+        tabletBody: _TabletBoardView(colors: colors),
+        desktopBody: _DesktopBoardView(colors: colors),
       ),
     );
   }
@@ -30,8 +62,8 @@ class BoardScreen extends StatelessWidget {
 // -----------------------------------------------------------------------------
 final List<String> _dummyColumns = [
   'To Do',
-  'In Progress',
   'Code Review',
+  'In Progress',
   'Done',
   'Archive',
   'Backlog',
@@ -42,22 +74,26 @@ final List<String> _dummyColumns = [
 ];
 
 // -----------------------------------------------------------------------------
-// 1. Mobile View (PageView - 1 Column per page)
+// 1. Mobile View (PageView)
 // -----------------------------------------------------------------------------
 class _MobileBoardView extends StatelessWidget {
-  const _MobileBoardView();
+  final AppColors colors;
+  const _MobileBoardView({required this.colors});
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: PageView.builder(
-        controller: PageController(viewportFraction: 0.9), // Show a peek of next card
+        controller: PageController(viewportFraction: 0.9),
         itemCount: _dummyColumns.length,
         itemBuilder: (context, index) {
-          return _ColumnItem(
-            title: _dummyColumns[index],
-            color: CupertinoColors.systemGrey6,
-            isMobile: true,
+          return Align(
+            alignment: Alignment.topCenter,
+            child: _ColumnItem(
+              title: _dummyColumns[index],
+              colors: colors,
+              isMobile: true,
+            ),
           );
         },
       ),
@@ -66,10 +102,11 @@ class _MobileBoardView extends StatelessWidget {
 }
 
 // -----------------------------------------------------------------------------
-// 2. Tablet View (ListView - 2~3 Columns visible)
+// 2. Tablet View (ListView)
 // -----------------------------------------------------------------------------
 class _TabletBoardView extends StatelessWidget {
-  const _TabletBoardView();
+  final AppColors colors;
+  const _TabletBoardView({required this.colors});
 
   @override
   Widget build(BuildContext context) {
@@ -80,11 +117,14 @@ class _TabletBoardView extends StatelessWidget {
         itemCount: _dummyColumns.length,
         itemBuilder: (context, index) {
           return SizedBox(
-            width: 300, // Fixed width for tablet columns
-            child: _ColumnItem(
-              title: _dummyColumns[index],
-              color: CupertinoColors.systemGroupedBackground,
-              isMobile: false,
+            width: 300,
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: _ColumnItem(
+                title: _dummyColumns[index],
+                colors: colors,
+                isMobile: false,
+              ),
             ),
           );
         },
@@ -94,10 +134,11 @@ class _TabletBoardView extends StatelessWidget {
 }
 
 // -----------------------------------------------------------------------------
-// 3. Desktop View (ListView - Wide, Max Contraints handled by Wrapper)
+// 3. Desktop View (ListView)
 // -----------------------------------------------------------------------------
 class _DesktopBoardView extends StatelessWidget {
-  const _DesktopBoardView();
+  final AppColors colors;
+  const _DesktopBoardView({required this.colors});
 
   @override
   Widget build(BuildContext context) {
@@ -108,11 +149,14 @@ class _DesktopBoardView extends StatelessWidget {
         itemCount: _dummyColumns.length,
         itemBuilder: (context, index) {
           return SizedBox(
-            width: 350, // Slightly wider columns for desktop
-            child: _ColumnItem(
-              title: _dummyColumns[index],
-              color: CupertinoColors.secondarySystemGroupedBackground,
-              isMobile: false,
+            width: 350,
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: _ColumnItem(
+                title: _dummyColumns[index],
+                colors: colors,
+                isMobile: false,
+              ),
             ),
           );
         },
@@ -126,13 +170,13 @@ class _DesktopBoardView extends StatelessWidget {
 // -----------------------------------------------------------------------------
 class _ColumnItem extends StatelessWidget {
   final String title;
-  final Color color;
   final bool isMobile;
+  final AppColors colors;
 
   const _ColumnItem({
     required this.title,
-    required this.color,
     required this.isMobile,
+    required this.colors,
   });
 
   @override
@@ -143,17 +187,19 @@ class _ColumnItem extends StatelessWidget {
         vertical: 16.0,
       ),
       decoration: BoxDecoration(
-        color: color,
+        color: colors.columnBackground,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors.border, width: 0.5),
         boxShadow: [
           BoxShadow(
-            color: CupertinoColors.black.withOpacity(0.05),
+            color: colors.shadow,
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min, // Wrap content height
         children: [
           // Header
           Padding(
@@ -166,24 +212,27 @@ class _ColumnItem extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
+                    color: colors.text,
                   ),
                 ),
-                const Icon(
+                Icon(
                   CupertinoIcons.ellipsis,
-                  color: CupertinoColors.systemGrey,
+                  color: colors.subText,
                 ),
               ],
             ),
           ),
-          const Divider(height: 1, color: CupertinoColors.systemGrey5),
+          Container(height: 1, color: colors.border),
           
-          // Cards List Area (Placeholder)
-          Expanded(
+          // Cards List Area (Placeholder with min height)
+          Container(
+            constraints: const BoxConstraints(minHeight: 100),
+            padding: const EdgeInsets.all(16),
             child: Center(
               child: Text(
                 'Drop tasks here',
                 style: GoogleFonts.inter(
-                  color: CupertinoColors.systemGrey3,
+                  color: colors.cardPlaceholderText,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -195,19 +244,19 @@ class _ColumnItem extends StatelessWidget {
             padding: const EdgeInsets.all(12.0),
             child: CupertinoButton(
               onPressed: () {},
-              color: CupertinoColors.tertiarySystemFill,
+              color: colors.border, // Using border color (greyish) for subtle button or define separate
               borderRadius: BorderRadius.circular(8),
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(CupertinoIcons.add, size: 16, color: CupertinoColors.systemGrey),
-                  const SizedBox(width: 8),
+                   Icon(CupertinoIcons.add, size: 16, color: colors.subText),
+                   const SizedBox(width: 8),
                   Text(
                     'Add Task',
                     style: GoogleFonts.inter(
                       fontSize: 14,
-                      color: CupertinoColors.systemGrey,
+                      color: colors.subText,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
